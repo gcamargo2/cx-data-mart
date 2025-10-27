@@ -23,7 +23,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -448,10 +448,7 @@ def parse_args():
     return p.parse_args()
 
 
-def main():
-    args = parse_args()
-    target_year = str(args.year)
-    outdir = args.outdir
+def main(target_year, outdir):
     os.makedirs(outdir, exist_ok=True)
 
     print("FSA Crop Acreage Data downloader")
@@ -510,5 +507,17 @@ def main():
     print(f"File saved: {out_path}")
 
 
+def generate_years_str_range(start_str: str, end_str: str) -> list[str]:
+    """Generate a range of years between start_str and end_str."""
+    start = int(start_str)
+    end = int(end_str)
+    return [str(year) for year in range(start, end + 1)]
+
+
 if __name__ == "__main__":
-    main()
+    outdir = "county_fsa_downloads"
+    current_year = str(datetime.now(UTC).year)
+    target_years = generate_years_str_range(start_str="2007", end_str=current_year)
+    for target_year in target_years:
+        print(f"Downloading {target_year} ...")
+        main(target_year, outdir)
