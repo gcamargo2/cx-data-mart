@@ -7,7 +7,10 @@ authors = [
     { name = "Gustavo Camargo", email = "" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "beautifulsoup4>=4.14.2",
+    "requests>=2.32.5",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.5,<0.10.0"]
@@ -15,6 +18,7 @@ build-backend = "uv_build"
 # Ruff config
 
 [tool.ruff]
+output-format = "concise"
 exclude = ["tests"]
 line-length = 88
 indent-width = 4
@@ -103,6 +107,24 @@ ignore = ["ANN202",
     "ANN101", # depracated
     "D107",
     "D104",
+    "T201",
+  "PLR0914",
+  "D103",
+  "ANN201",
+  "ANN001",
+  "RUF003",
+  "D205",
+  "D415",
+  "E501",
+  "FBT002",
+  "DTZ007",
+  "SIM103",
+  "PIE810",
+  "S112",
+  "PLR2004",
+  "S110",
+  "FURB118"
+
 ]
 fixable = ["ALL"]
 
