@@ -517,7 +517,7 @@ def generate_years_str_range(start_str: str, end_str: str) -> list[str]:
 if __name__ == "__main__":
     outdir = "county_fsa_downloads"
     current_year = str(datetime.now(UTC).year)
-    target_years = generate_years_str_range(start_str="2015", end_str=current_year)
+    target_years = generate_years_str_range(start_str="2016", end_str=current_year)
     for target_year in target_years:
         print(f"Downloading {target_year} ...")
         main(target_year, outdir)

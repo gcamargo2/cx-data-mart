@@ -1,10 +1,14 @@
 """List excel files in directory."""
 
+import os
 from collections.abc import Iterable
 from pathlib import Path
 
 import klib
 import pandas as pd
+from bayer_api.bayer_auth import get_gat_np_bq_credential
+from bayer_api.bigquery import gen_bigquery_client
+from bayer_api.gcs_funcs import GCSManager
 
 from cx_data_mart.constants import cx_data_mart_proj_path
 from cx_data_mart.funcs import (
@@ -82,17 +86,56 @@ if __name__ == "__main__":
     df_clean = remove_accents_and_special_chars(df=df_clean, text_cols=text_cols)
 
     df_clean = klib.data_cleaning(
-        data=df_clean, drop_threshold_cols=1, drop_threshold_rows=1, category=False
+        data=df_clean,
+        drop_threshold_cols=1,
+        drop_threshold_rows=1,
+        category=False,
+        drop_duplicates=False,
     )
-
+    df_clean["planted_acres"] = pd.to_numeric(
+        df_clean["planted_acres"], errors="coerce"
+    )
+    df_clean["volunteer_acres"] = pd.to_numeric(
+        df_clean["volunteer_acres"], errors="coerce"
+    )
+    df_clean["failed_acres"] = pd.to_numeric(df_clean["failed_acres"], errors="coerce")
+    df_clean["prevented_acres"] = pd.to_numeric(
+        df_clean["prevented_acres"], errors="coerce"
+    )
+    df_clean["not_planted_acres"] = pd.to_numeric(
+        df_clean["not_planted_acres"], errors="coerce"
+    )
     dtype = {
-        "state_code": "Int64",
-        "county_code": "Int64",
-        "crop_code": "Int64",
+        "state_code": "string",
+        "county_code": "string",
+        "crop_code": "string",
+        "state_county_code": "string",
+        "planted_acres": "Float64",
+        "volunteer_acres": "Float64",
+        "failed_acres": "Float64",
+        "prevented_acres": "Float64",
+        "not_planted_acres": "Float64",
     }
     df_clean = add_type_to_pd_cols(df=df_clean, dtype=dtype)
-
-    df_clean.to_parquet(
+    df_clean["fips_code"] = df_clean["state_county_code"].str.zfill(5)  # fix fips_code
+    # Drop columns
+    df_clean = df_clean.drop(
+        columns=["state_county_code", "state_code", "county_code"],
+    )
+    local_file_path = (
         cx_data_mart_proj_path
         / "src/cx_data_mart/processing/county_fsa/county_fsa_data.parquet"
     )
+    df_clean.to_parquet(local_file_path)
+
+    # Save to GCS
+    bucket_name = "market-insights-data"
+    np_project_id = "bcs-grower-analytics-warehouse"
+    gat_np_bq_credential = get_gat_np_bq_credential()
+    np_bigquery_client = gen_bigquery_client(
+        project=np_project_id, credentials=gat_np_bq_credential
+    )
+    gcs = GCSManager(bucket_name=bucket_name, bigquery_client=np_bigquery_client)
+    gcs_fpath = "county_fsa_data/county_fsa_data.parquet"
+    gcs.upload_file(local_file_path=local_file_path, gcs_file_name=gcs_fpath)
+    os.remove(local_file_path)
