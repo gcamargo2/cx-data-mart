@@ -8,6 +8,8 @@ from typing import Any, Literal
 import chardet
 import numpy as np
 import pandas as pd
+import pandas_gbq
+from google.cloud import bigquery
 from janitor import (
     clean_names,
     drop_constant_columns,
@@ -455,3 +457,41 @@ def get_duplicated_columns(df: pd.DataFrame) -> list[str] | None:
     if len(duplicated_columns) > 0:
         return duplicated_columns
     return None
+
+
+@validate_call(config=ConfigDict(arbitrary_types_allowed=True))
+def bigquery_to_dataframe(
+    query_or_table: str,
+    project_id: str,
+    bigquery_client: bigquery.Client,
+    *,
+    qaqc: bool = True,
+    use_bqstorage_api: bool = True,
+) -> pd.DataFrame:
+    """Bigquery to dataframe.
+
+    Args:
+        query_or_table: The BigQuery table ID or a SQL query to execute.
+        project_id: The Google Cloud project ID.
+        bigquery_client: An authenticated BigQuery client instance.
+        qaqc: If True, remove duplicate rows and check for unique indexes.
+        use_bqstorage_api: If True, use BigQuery Storage API.
+
+    Returns:
+        A pandas DataFrame with the query results or table data.
+    """
+    df = pandas_gbq.read_gbq(
+        query_or_table=query_or_table,
+        project_id=project_id,
+        bigquery_client=bigquery_client,
+        use_bqstorage_api=use_bqstorage_api,
+    )
+
+    # QAQC
+    if qaqc:
+        df = df.drop_duplicates()  # Remove duplicates
+        assert df.index.is_unique is True, (
+            "Issue with duplicated indexes, check duplicated data."
+        )
+        assert df.shape[0] > 0, f"Empty dataframe from: {query_or_table}."
+    return df

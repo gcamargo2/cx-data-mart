@@ -9,6 +9,7 @@ import pandas as pd
 from bayer_api.bayer_auth import get_gat_np_bq_credential
 from bayer_api.bigquery import gen_bigquery_client
 from bayer_api.gcs_funcs import GCSManager
+from pandas_gbq import to_gbq
 
 from cx_data_mart.constants import cx_data_mart_proj_path
 from cx_data_mart.funcs import (
@@ -139,3 +140,14 @@ if __name__ == "__main__":
     gcs_fpath = "county_fsa_data/county_fsa_data.parquet"
     gcs.upload_file(local_file_path=local_file_path, gcs_file_name=gcs_fpath)
     os.remove(local_file_path)
+
+    # Save to BQ
+    dataset_id = "bcs-grower-analytics-warehouse.staging_test"
+    table_id = f"{dataset_id}.county_fsa_data"
+    to_gbq(
+        df_clean,
+        destination_table=table_id,
+        project_id=np_project_id,
+        if_exists="replace",  # "fail" | "replace" | "append"
+        credentials=gat_np_bq_credential,
+    )
