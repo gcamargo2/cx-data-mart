@@ -17,7 +17,7 @@ set_pandas_setup()
 
 raw_data_path = (
     cx_data_mart_proj_path
-    / "src/cx_data_mart/processing/higby_barrett/raw_data/Master All Data File October 2025 - Final.xlsx"
+    / "src/cx_data_mart/processing/higby_barrett/raw_data/Master All Data File January 2026 - Final.xlsx"
 )
 
 df = pd.read_excel(
@@ -25,7 +25,7 @@ df = pd.read_excel(
     sheet_name="All Data",
     dtype={"5-DigitFIPS ": str, "StateFIPS": str, "CountyFIPS": str},
 )
-print(df.head())
+
 df = janitor_df_cleaning(
     df=df,
     truncate_limit=100,
@@ -60,8 +60,13 @@ df = df[keep_columns]
 df["lastupdate"] = pd.to_datetime(df["lastupdate"]).dt.strftime("%Y-%m-%d")
 df["fips_code"] = df["5_digitfips"].astype("string").str.zfill(5)  # fix fips_code
 
+# Assert fips_code column has 5 characters
+assert df["fips_code"].str.len().eq(5).all(), "fips_code column must have 5 characters"
+
 # Drop duplicates for a given year, keeping first occurrence
-df = df.drop_duplicates(subset=["year", "cropcode", "type", "fips_code"], keep="first")
+df = df.sort_values("acres", ascending=False).drop_duplicates(
+    subset=["year", "cropcode", "type", "fips_code"], keep="first"
+)
 
 # Drop columns
 df = df.drop(
