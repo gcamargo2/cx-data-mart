@@ -121,14 +121,14 @@ ignore = [
     "COM812", # conflicts stuff
     "FIX002", # asks to solve TODOs
     "TD003", # asks for an issue link for TODOs
-    "ANN101", # depracated
+#    "ANN101", # depracated
     "D107",
     "D104",
     "T201",
   "PLR0914",
   "D103",
-  "ANN201",
-  "ANN001",
+#  "ANN201",
+#  "ANN001",
   "RUF003",
   "D205",
   "D415",
