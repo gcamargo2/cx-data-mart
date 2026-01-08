@@ -104,7 +104,8 @@ select = [
     "LOG",
     "RUF"
 ]
-ignore = ["ANN202",
+ignore = [
+#  "ANN202",
     "S101",
     "RET504",
     "PD901",
